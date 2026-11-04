@@ -1,5 +1,42 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-- gotk-components.yaml
-- gotk-sync.yaml
+  - gotk-components.yaml
+  - gotk-sync.yaml
+patches:
+  - target:
+      kind: Deployment
+      name: source-controller
+      namespace: flux-system
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/env
+        value:
+          - name: HTTP_PROXY
+            value: "http://10.64.194.105:3129"
+          - name: HTTPS_PROXY
+            value: "http://10.64.194.105:3129"
+          - name: http_proxy
+            value: "http://10.64.194.105:3129"
+          - name: https_proxy
+            value: "http://10.64.194.105:3129"
+          - name: NO_PROXY
+            value: "localhost,127.0.0.1,10.96.0.1,10.96.0.0/12,10.244.0.0/16,10.64.194.105,.svc,.cluster.local,kubernetes,kubernetes.default,kubernetes.default.svc"
+  - target:
+      kind: Deployment
+      name: kustomize-controller
+      namespace: flux-system
+    patch: |
+      - op: add
+        path: /spec/template/spec/containers/0/env
+        value:
+          - name: HTTP_PROXY
+            value: "http://10.64.194.105:3129"
+          - name: HTTPS_PROXY
+            value: "http://10.64.194.105:3129"
+          - name: http_proxy
+            value: "http://10.64.194.105:3129"
+          - name: https_proxy
+            value: "http://10.64.194.105:3129"
+          - name: NO_PROXY
+            value: "localhost,127.0.0.1,10.96.0.1,10.96.0.0/12,10.244.0.0/16,10.64.194.105,.svc,.cluster.local,kubernetes,kubernetes.default,kubernetes.default.svc,.local.,.svc."
