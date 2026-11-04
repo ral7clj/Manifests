@@ -6,7 +6,7 @@ metadata:
 spec:
   subscriptions:
   - git:
-      repoURL: https://github.com/ral7clj/Manifests
+      repoURL: https://github.com/ral7clj/Services.git # <--- Corectat să urmărească Services!
       branch: main
       includePaths:
-        - app/
+        - stages
