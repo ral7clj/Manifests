@@ -4,7 +4,7 @@ metadata:
   name: gobg-prod
   namespace: flux-system
 spec:
-  interval: 1m0s
+  interval: 10s
   url: https://github.com/ral7clj/Manifests.git
   ref:
     branch: stage/prod
@@ -15,7 +15,7 @@ metadata:
   name: gobg-prod
   namespace: flux-system
 spec:
-  interval: 1m0s
+  interval: 10s
   path: ./
   prune: true
   sourceRef:
