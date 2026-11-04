@@ -5,15 +5,14 @@ metadata:
   namespace: kargo
 spec:
   vars:
-  - name: sourceRepo 
+  - name: sourceRepo
     value: https://github.com/ral7clj/Services.git
-  - name: targetRepo 
+  - name: targetRepo
     value: https://github.com/ral7clj/Manifests.git
   - name: sourceBranch
     value: main
   - name: targetBranch
   steps:
-  
   - uses: git-clone
     as: clone-sources
     config:
@@ -21,8 +20,6 @@ spec:
       checkout:
       - branch: ${{ vars.sourceBranch }}
         path: ./src
-
-
   - uses: git-clone
     as: clone-targets
     config:
@@ -31,32 +28,25 @@ spec:
       - branch: stage/${{ vars.targetBranch }}
         create: true
         path: ./dst
-
   - uses: git-clear
     as: clear
     config:
       path: ./dst
-
- 
   - uses: kustomize-build
     as: build-manifests
     config:
       path: ./src/stages/${{ vars.targetBranch }}
       outPath: ./dst/${{ vars.targetBranch }}.yaml
-
   - uses: git-commit
     as: commit
     config:
       path: ./dst
-      messageFromSteps:
-      - build-manifests
-
+      message: "kargo: upgrade manifests for stage ${{ vars.targetBranch }}"
   - uses: git-push
     as: push
     config:
       path: ./dst
       targetBranch: stage/${{ vars.targetBranch }}
-
   - uses: http
     config:
       method: POST
