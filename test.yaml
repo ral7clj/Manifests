@@ -63,7 +63,6 @@ spec:
         max: 500
     stepWeight: 10
     threshold: 5
-  interval: 15s
   service:
     gateways:
     - mesh
@@ -73,4 +72,3 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: gobg
-  threshold: 5
