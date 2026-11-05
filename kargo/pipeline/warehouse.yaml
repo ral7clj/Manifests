@@ -7,5 +7,4 @@ spec:
   subscriptions:
   - git:
       repoURL: https://github.com/ral7clj/Services.git
-      includePaths:
-        - stages
+      branch: main
