@@ -42,3 +42,35 @@ spec:
   selector:
     app: gobg
   type: NodePort
+---
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: gobg
+  namespace: gobg-test
+spec:
+  analysis:
+    interval: 15s
+    maxWeight: 50
+    metrics:
+    - interval: 1m
+      name: request-success-rate
+      thresholdRange:
+        min: 99
+    - interval: 1m
+      name: request-duration
+      thresholdRange:
+        max: 500
+    stepWeight: 10
+    threshold: 5
+  interval: 15s
+  service:
+    gateways:
+    - mesh
+    port: 8080
+    targetPort: 8080
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gobg
+  threshold: 5
