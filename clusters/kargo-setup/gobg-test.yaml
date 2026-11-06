@@ -22,3 +22,5 @@ spec:
     kind: GitRepository
     name: gobg-test
   targetNamespace: gobg-test
+  serverSideApply: true
+  force: true
