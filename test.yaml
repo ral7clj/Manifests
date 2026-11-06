@@ -65,8 +65,11 @@ spec:
     threshold: 5
   service:
     gateways:
+    - gobg-gateway.gobg-test
     - mesh
-    port: 8080
+    hosts:
+    - '*'
+    port: 80
     targetPort: 8080
   targetRef:
     apiVersion: apps/v1
