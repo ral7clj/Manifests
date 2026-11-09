@@ -1,0 +1,64 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kargo-relay
+  namespace: gobg-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kargo-relay
+  template:
+    metadata:
+      labels:
+        app: kargo-relay
+    spec:
+      containers:
+      - name: nginx-proxy
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+        env:
+        - name: KARGO_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: kargo-api-secret
+              key: token
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          cat << 'EOF' > /etc/nginx/conf.d/default.conf
+          server {
+              listen 80;
+
+              location /promote-uat {
+                  proxy_pass http://kargo-api.kargo.svc.cluster.local/v1alpha1/projects/kargo/stages/uat/promote;
+                  proxy_set_header Authorization "Bearer ${KARGO_TOKEN}";
+                  proxy_set_header Content-Type "application/json";
+                  proxy_pass_request_body on;
+              }
+
+              location /rollback-test {
+                  proxy_pass http://kargo-api.kargo.svc.cluster.local/v1alpha1/projects/kargo/stages/test/rollback;
+                  proxy_set_header Authorization "Bearer ${KARGO_TOKEN}";
+                  proxy_set_header Content-Type "application/json";
+                  proxy_pass_request_body on;
+              }
+          }
+          EOF
+          envsubst '$KARGO_TOKEN' < /etc/nginx/conf.d/default.conf > /etc/nginx/conf.d/default.conf.tmp
+          mv /etc/nginx/conf.d/default.conf.tmp /etc/nginx/conf.d/default.conf
+          nginx -g "daemon off;"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kargo-relay
+  namespace: gobg-test
+spec:
+  selector:
+    app: kargo-relay
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
