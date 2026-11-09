@@ -1,4 +1,14 @@
 apiVersion: kargo.akuity.io/v1alpha1
-kind: Project
+kind: ProjectConfig
 metadata:
   name: kargo
+  namespace: kargo
+spec:
+  promotionPolicies:
+    - stageSelector:
+        name: test
+      autoRollback: true
+    - stageSelector:
+        name: uat
+      autoPromotionEnabled: true
+      autoRollback: true

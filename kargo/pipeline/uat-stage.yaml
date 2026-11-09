@@ -13,6 +13,8 @@ spec:
     sources:
       stages:
       - test
+  autoPromotionOptions:
+    selectionPolicy: MatchUpstream
   promotionTemplate:
     spec:
       vars:
