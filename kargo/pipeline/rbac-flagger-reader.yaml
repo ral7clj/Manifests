@@ -17,6 +17,9 @@ subjects:
 - kind: ServiceAccount
   name: kargo-controller
   namespace: kargo
+- kind: ServiceAccount
+  name: default
+  namespace: kargo
 roleRef:
   kind: Role
   name: kargo-canary-reader

@@ -51,11 +51,11 @@ spec:
     as: wait-for-flagger-canary
     if: ${{ vars.targetBranch == 'test' }}
     retry:
-      errorThreshold: 40
       timeout: 10m
     config:
       method: GET
       url: https://kubernetes.default.svc/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
       insecureSkipTLSVerify: true
-      successCondition: ${{ response.body.status.phase == 'Succeeded' }}
-      failureCondition: ${{ response.body.status.phase == 'Failed' }}
+      pollInterval: 15s
+      successExpression: "response.body?.status?.phase == 'Succeeded'"
+      failureExpression: "response.body?.status?.phase == 'Failed'"
