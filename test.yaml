@@ -75,15 +75,6 @@ spec:
         min: 99
     stepWeight: 10
     threshold: 5
-    webhooks:
-    - name: promote-to-uat
-      timeout: 15s
-      type: post-rollout
-      url: http://kargo-relay.gobg-test.svc.cluster.local/promote-uat
-    - name: rollback-test-manifests
-      timeout: 15s
-      type: rollback
-      url: http://kargo-relay.gobg-test.svc.cluster.local/rollback-test
   service:
     gateways:
     - gobg-gateway
