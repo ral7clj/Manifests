@@ -21,15 +21,16 @@ spec:
       - task:
           name: gobg-promote
         as: promote-to-test
+
   verification:
     analysisTemplates:
-    - spec:
-        provider:
-          http:
-            address: https://kubernetes.default.svc/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
-            insecureSkipTLSVerify: true
-            headers:
-            - name: Authorization
-              value: Bearer /var/run/secrets/kubernetes.io/serviceaccount/token
-            successCondition: "response.status == 200 && response.body.status.phase == 'Succeeded'"
-            failureCondition: "response.status != 200 || response.body.status.phase == 'Failed'"
+    - name: flagger-canary-check 
+      provider:
+        http:
+          address: https://kubernetes.default.svc/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
+          insecureSkipTLSVerify: true
+          headers:
+          - name: Authorization
+            value: Bearer /var/run/secrets/kubernetes.io/serviceaccount/token
+          successCondition: "response.status == 200 && response.body.status.phase == 'Succeeded'"
+          failureCondition: "response.status != 200 || response.body.status.phase == 'Failed'"
