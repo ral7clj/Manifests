@@ -47,26 +47,15 @@ spec:
       path: ./dst
       message: "kargo: upgrade manifests for stage ${{ vars.targetBranch }}"
 
-  - uses: run
+  - uses: http
     as: wait-for-flagger-canary
     if: ${{ vars.targetBranch == 'test' }}
+    retry:
+      errorThreshold: 40
+      timeout: 10m
     config:
-      image: bitnami/kubectl:latest
-      command:
-      - /bin/sh
-      - -c
-      - |
-        echo "Waiting for Flagger to detect the new deployment and start Canary"
-        sleep 20
-        while true; do
-          PHASE=$(kubectl get canary gobg -n gobg-test -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting")
-          echo "Status Flagger Canary: $PHASE"
-          if [ "$PHASE" = "Succeeded" ]; then
-            echo "Canary promoted succesfully"
-            exit 0
-          elif [ "$PHASE" = "Failed" ]; then
-            echo "Canary failed"
-            exit 1
-          fi
-          sleep 10
-        done  
+      method: GET
+      url: https://kubernetes.default.svc/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
+      insecureSkipTLSVerify: true
+      successCondition: ${{ response.body.status.phase == 'Succeeded' }}
+      failureCondition: ${{ response.body.status.phase == 'Failed' }}
