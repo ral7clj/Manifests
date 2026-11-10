@@ -46,3 +46,15 @@ spec:
     config:
       path: ./dst
       message: "kargo: upgrade manifests for stage ${{ vars.targetBranch }}"
+  - uses: http
+    as: wait-for-flagger-canary
+    if: ${{ vars.targetBranch == 'test' }}
+    retry:
+      timeout: 10m
+    config:
+      method: GET
+      url: https://kubernetes.default.svc/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
+      insecureSkipTLSVerify: true
+      pollInterval: 15s
+      successExpression: "response.body['status']['phase'] == 'Succeeded'"
+      failureExpression: "response.body['status']['phase'] == 'Failed'"    
