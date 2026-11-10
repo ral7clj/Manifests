@@ -47,14 +47,9 @@ spec:
       path: ./dst
       message: "kargo: upgrade manifests for stage ${{ vars.targetBranch }}"
 
-  - uses: git-push
-    as: push
-    config:
-      path: ./dst
-      targetBranch: stage/${{ vars.targetBranch }}
   - uses: run
     as: wait-for-flagger-canary
-    if: vars.targetBranch == 'test'
+    if: ${{ vars.targetBranch == 'test' }}
     config:
       image: bitnami/kubectl:latest
       command:
@@ -74,4 +69,4 @@ spec:
             exit 1
           fi
           sleep 10
-        done    
+        done  
