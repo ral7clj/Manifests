@@ -52,3 +52,26 @@ spec:
     config:
       path: ./dst
       targetBranch: stage/${{ vars.targetBranch }}
+  - uses: run
+    as: wait-for-flagger-canary
+    if: vars.targetBranch == 'test'
+    config:
+      image: bitnami/kubectl:latest
+      command:
+      - /bin/sh
+      - -c
+      - |
+        echo "Waiting for Flagger to detect the new deployment and start Canary"
+        sleep 20
+        while true; do
+          PHASE=$(kubectl get canary gobg -n gobg-test -o jsonpath='{.status.phase}' 2>/dev/null || echo "Waiting")
+          echo "Status Flagger Canary: $PHASE"
+          if [ "$PHASE" = "Succeeded" ]; then
+            echo "Canary promoted succesfully"
+            exit 0
+          elif [ "$PHASE" = "Failed" ]; then
+            echo "Canary failed"
+            exit 1
+          fi
+          sleep 10
+        done    
