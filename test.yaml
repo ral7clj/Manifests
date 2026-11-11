@@ -31,7 +31,7 @@ spec:
         app: gobg
     spec:
       containers:
-      - image: ral7clj/gobg:blue
+      - image: ral7clj/gobg:green
         name: gobg
         resources: {}
 ---
@@ -55,6 +55,25 @@ spec:
   selector:
     app: gobg
   type: NodePort
+---
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+    kustomize.toolkit.fluxcd.io/ssa: Merge
+  name: gobg-gateway
+  namespace: gobg-test
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - '*'
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
 ---
 apiVersion: flagger.app/v1beta1
 kind: Canary
@@ -89,22 +108,3 @@ spec:
     apiVersion: apps/v1
     kind: Deployment
     name: gobg
----
-apiVersion: networking.istio.io/v1alpha3
-kind: Gateway
-metadata:
-  annotations:
-    kustomize.toolkit.fluxcd.io/force: enabled
-    kustomize.toolkit.fluxcd.io/ssa: Merge
-  name: gobg-gateway
-  namespace: gobg-test
-spec:
-  selector:
-    istio: ingressgateway
-  servers:
-  - hosts:
-    - '*'
-    port:
-      name: http
-      number: 80
-      protocol: HTTP
