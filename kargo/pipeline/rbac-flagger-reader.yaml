@@ -1,7 +1,7 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
-  name: kargo-canary-reader
+  name: flagger-canary-reader
   namespace: gobg-test
 rules:
 - apiGroups: ["flagger.app"]
@@ -11,16 +11,16 @@ rules:
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: kargo-canary-reader-binding
+  name: kargo-promoter-flagger-binding
   namespace: gobg-test
 subjects:
 - kind: ServiceAccount
-  name: kargo-controller
+  name: kargo-promotion-orchestrator
   namespace: kargo
 - kind: ServiceAccount
-  name: default
+  name: kargo-controller
   namespace: kargo
 roleRef:
   kind: Role
-  name: kargo-canary-reader
+  name: flagger-canary-reader
   apiGroup: rbac.authorization.k8s.io
