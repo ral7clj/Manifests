@@ -14,18 +14,11 @@ spec:
   - name: targetBranch
   
   steps:
-  - uses: http
+  - uses: k8s-run-job
     as: wait-for-flagger-canary
     if: "${{ vars.targetBranch == 'uat' }}"
-    retry:
-      timeout: 15m
     config:
-      method: GET
-      url: https://kubernetes.default.svc/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
-      insecureSkipTLSVerify: true
-      pollInterval: 15s
-      successExpression: "response.status == 200 && 'Succeeded' in response.body && 'lastAppliedSpec\":\"' + response.body.split('lastAppliedSpec\":\"')[1].split('\"')[0] == 'lastPromotedSpec\":\"' + response.body.split('lastPromotedSpec\":\"')[1].split('\"')[0]"
-      failureExpression: "response.status != 200 || 'Failed' in response.body"
+      manifestPath: ./src/kargo/pipeline/validation-job.yaml
   - uses: git-clone
     as: clone-sources
     config:

@@ -1,0 +1,44 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: gobg-canary-validation-
+  namespace: kargo
+spec:
+  template:
+    spec:
+      serviceAccountName: kargo-promotion-orchestrator
+      restartPolicy: Never
+      containers:
+      - name: validator
+        image: bitnami/kubectl:latest
+        command: ["/bin/sh", "-c"]
+        args:
+        - |
+          set -e
+          echo "Starting Flagger canary validation"
+
+          while true; do
+            PHASE=$(kubectl get canary gobg -n gobg-test -o jsonpath='{.status.phase}' 2>/dev/null || echo "Unknown")
+            if [ "$PHASE" != "Succeeded" ] && [ "$PHASE" != "Unknown" ]; then
+              echo "Flagger analysis started. Phase: $PHASE"
+              break
+            fi
+            sleep 10
+          done
+
+          while true; do
+            PHASE=$(kubectl get canary gobg -n gobg-test -o jsonpath='{.status.phase}')
+            echo "Canary Phase: $PHASE"
+
+            if [ "$PHASE" = "Succeeded" ]; then
+              echo "Success: Flagger promotion completed"
+              exit 0
+            fi
+
+            if [ "$PHASE" = "Failed" ]; then
+              echo "Error: Flagger promotion failed"
+              exit 1
+            fi
+
+            sleep 15
+          done
