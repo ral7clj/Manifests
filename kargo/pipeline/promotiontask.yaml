@@ -15,66 +15,16 @@ spec:
 
   steps:
   - uses: http
-    as: trigger-validation-job
-    if: "${{ vars.targetBranch == 'uat' }}"
-    config:
-      method: POST
-      url: https://kubernetes.default.svc/apis/batch/v1/namespaces/kargo/jobs
-      insecureSkipTLSVerify: true
-      headers:
-      - name: Content-Type
-        value: application/json
-      body: |
-        {
-          "apiVersion": "batch/v1",
-          "kind": "Job",
-          "metadata": {
-            "name": "gobg-canary-validation",
-            "namespace": "kargo"
-          },
-          "spec": {
-            "template": {
-              "spec": {
-                "serviceAccountName": "kargo-promotion-orchestrator",
-                "restartPolicy": "Never",
-                "containers": [
-                  {
-                    "name": "validator",
-                    "image": "bitnami/kubectl:latest",
-                    "command": ["/bin/sh", "-c"],
-                    "args": [
-                      "set -e\nwhile true; do\n  PHASE=$(kubectl get canary gobg -n gobg-test -o jsonpath='{.status.phase}' 2>/dev/null || echo 'Unknown')\n  if [ \"$PHASE\" != \"Succeeded\" ] && [ \"$PHASE\" != \"Unknown\" ]; then\n    break\n  fi\n  sleep 10\ndone\nwhile true; do\n  PHASE=$(kubectl get canary gobg -n gobg-test -o jsonpath='{.status.phase}')\n  if [ \"$PHASE\" = \"Succeeded\" ]; then\n    exit 0\n  fi\n  if [ \"$PHASE\" = \"Failed\" ]; then\n    exit 1\n  fi\n  sleep 15\ndone"
-                    ]
-                  }
-                ]
-              }
-            }
-          }
-        }
-      successExpression: "response.status == 201 || response.status == 409"
-      failureExpression: "response.status != 201 && response.status != 409"
-
-  - uses: http
-    as: wait-for-validation-job
+    as: wait-for-flagger-canary
     if: "${{ vars.targetBranch == 'uat' }}"
     retry:
       timeout: 15m
     config:
       method: GET
-      url: https://kubernetes.default.svc/apis/batch/v1/namespaces/kargo/jobs/gobg-canary-validation
-      insecureSkipTLSVerify: true
+      url: http://prometheus.istio-system.svc.cluster.local:9090/api/v1/query?query=flagger_canary_status{name="gobg",namespace="gobg-test"}
       pollInterval: 15s
-      successExpression: "response.status == 200 && 'succeeded' in response.body"
-      failureExpression: "response.status != 200 || 'failed' in response.body"
-
-  - uses: http
-    as: cleanup-validation-job
-    if: "${{ vars.targetBranch == 'uat' }}"
-    config:
-      method: DELETE
-      url: https://kubernetes.default.svc/apis/batch/v1/namespaces/kargo/jobs/gobg-canary-validation?propagationPolicy=Background
-      insecureSkipTLSVerify: true
-      successExpression: "response.status == 200 || response.status == 404"
+      successExpression: "response.status == 200 && '\"1\"' in response.body"
+      failureExpression: "response.status != 200 || '\"-1\"' in response.body"
 
   - uses: git-clone
     as: clone-sources
@@ -115,18 +65,3 @@ spec:
     config:
       path: ./dst
       targetBranch: stage/${{ vars.targetBranch }}
-
-
-      
-# kubectl create role kargo-job-manager \
-#   --namespace=kargo \
-#   --resource=jobs.batch \
-#   --verb=create,get,list,watch,delete \
-#   --dry-run=client -o yaml | kubectl apply -f -
-#
-# kubectl create rolebinding kargo-job-manager-binding \
-#   --namespace=kargo \
-#   --role=kargo-job-manager \
-#   --serviceaccount=kargo:kargo-promotion-orchestrator \
-#   --dry-run=client -o yaml | kubectl apply -f -
-#
