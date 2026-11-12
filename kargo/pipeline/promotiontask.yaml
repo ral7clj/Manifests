@@ -13,6 +13,7 @@ spec:
     value: main
   - name: targetBranch
 
+  steps:
   - uses: http
     as: wait-for-flagger-canary
     if: "${{ vars.targetBranch == 'uat' }}"
@@ -20,12 +21,12 @@ spec:
       timeout: 15m
     config:
       method: GET
-      
       url: https://10.96.0.1/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
       insecureSkipTLSVerify: true
       pollInterval: 15s
       successExpression: "response.status == 200 && 'Succeeded' in response.body"
       failureExpression: "response.status != 200 || 'Failed' in response.body"
+
   - uses: git-clone
     as: clone-sources
     config:
