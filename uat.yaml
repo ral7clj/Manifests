@@ -22,7 +22,7 @@ spec:
         app: gobg
     spec:
       containers:
-      - image: ral7clj/gobg:blue
+      - image: ral7clj/gobg:green
         name: gobg
         resources: {}
 ---
@@ -42,31 +42,3 @@ spec:
   selector:
     app: gobg
   type: NodePort
----
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: gobg
-  namespace: gobg-uat
-spec:
-  analysis:
-    interval: 15s
-    maxWeight: 50
-    metrics:
-    - interval: 1m
-      name: request-success-rate
-      thresholdRange:
-        min: 99
-    stepWeight: 10
-    threshold: 5
-  service:
-    gateways:
-    - mesh
-    hosts:
-    - gobg
-    port: 80
-    targetPort: 8080
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: gobg
