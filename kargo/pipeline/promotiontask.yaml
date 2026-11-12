@@ -22,8 +22,6 @@ spec:
     config:
       method: GET
       url: http://prometheus.istio-system:9090/api/v1/query?query=flagger_canary_status%7Bname%3D%22gobg%22%2Cnamespace%3D%22gobg-test%22%7D
-      insecureSkipTLSVerify: true
-      proxy: "http://127.0.0.1:0"
       pollInterval: 15s
       successExpression: "response.status == 200 && ',\"1\"]' in response.body"
       failureExpression: "response.status != 200 || ',\"-1\"]' in response.body"
