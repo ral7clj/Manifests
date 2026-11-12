@@ -25,7 +25,10 @@ patches:
           - name: https_proxy
             value: "http://10.64.194.222:3129"
           - name: NO_PROXY
-            value: "localhost,127.0.0.1,10.96.0.1,10.96.0.0/12,10.244.0.0/16,10.64.194.222,.svc,.cluster.local,kubernetes,kubernetes.default,kubernetes.default.svc"
+            value: "localhost,127.0.0.1,10.96.0.1,10.96.0.0/12,10.244.0.0/16,10.64.194.222,10.141.0.0/18,192.168.0.0/24,172.18.0.0/16,172.17.0.0/16,.svc,.cluster.local,kubernetes,kubernetes.default,kubernetes.default.svc"
+          - name: no_proxy
+            value: "localhost,127.0.0.1,10.96.0.1,10.96.0.0/12,10.244.0.0/16,10.64.194.222,10.141.0.0/18,192.168.0.0/24,172.18.0.0/16,172.17.0.0/16,.svc,.cluster.local,kubernetes,kubernetes.default,kubernetes.default.svc"
+
   - target:
       kind: Deployment
       name: kustomize-controller
@@ -47,4 +50,7 @@ patches:
           - name: https_proxy
             value: "http://10.64.194.222:3129"
           - name: NO_PROXY
-            value: "localhost,127.0.0.1,10.96.0.1,10.96.0.0/12,10.244.0.0/16,10.64.194.222,.svc,.cluster.local,kubernetes,kubernetes.default,kubernetes.default.svc,.local.,.svc."
+            value: "localhost,127.0.0.1,10.96.0.1,10.96.0.0/12,10.244.0.0/16,10.64.194.222,10.141.0.0/18,192.168.0.0/24,172.18.0.0/16,172.17.0.0/16,.svc,.cluster.local,kubernetes,kubernetes.default,kubernetes.default.svc,.local.,.svc."
+          - name: no_proxy
+            value: "localhost,127.0.0.1,10.96.0.1,10.96.0.0/12,10.244.0.0/16,10.64.194.222,10.141.0.0/18,192.168.0.0/24,172.18.0.0/16,172.17.0.0/16,.svc,.cluster.local,k
+
