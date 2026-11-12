@@ -21,11 +21,12 @@ spec:
       timeout: 15m
     config:
       method: GET
-      url: https://10.96.0.1/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
+      url: http://prometheus.istio-system:9090/api/v1/query?query=flagger_canary_status%7Bname%3D%22gobg%22%2Cnamespace%3D%22gobg-test%22%7D
       insecureSkipTLSVerify: true
+      proxy: ""
       pollInterval: 15s
-      successExpression: "response.status == 200 && 'Succeeded' in response.body"
-      failureExpression: "response.status != 200 || 'Failed' in response.body"
+      successExpression: "response.status == 200 && ',\"1\"]' in response.body"
+      failureExpression: "response.status != 200 || ',\"-1\"]' in response.body"
 
   - uses: git-clone
     as: clone-sources
