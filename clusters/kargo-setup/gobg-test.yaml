@@ -22,3 +22,10 @@ spec:
     kind: GitRepository
     name: gobg-test
   targetNamespace: gobg-test
+  wait: true
+  timeout: 10m
+  healthChecks:
+  - apiVersion: flagger.app/v1beta1
+    kind: Canary
+    name: gobg
+    namespace: gobg-test

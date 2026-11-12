@@ -14,19 +14,6 @@ spec:
   - name: targetBranch
 
   steps:
-  - uses: http
-    as: wait-for-flagger-canary
-    if: "${{ vars.targetBranch == 'uat' }}"
-    retry:
-      timeout: 15m
-    config:
-      method: GET
-      url: http://prometheus.istio-system:9090/api/v1/query?query=flagger_canary_status%7Bname%3D%22gobg%22%2Cnamespace%3D%22gobg-test%22%7D
-      pollInterval: 15s
-      successExpression: "response.status == 200 && ',\"1\"]' in response.body"
-      failureExpression: "response.status != 200 || ',\"-1\"]' in response.body"
-
-
   - uses: git-clone
     as: clone-sources
     config:

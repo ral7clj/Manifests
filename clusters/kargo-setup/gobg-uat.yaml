@@ -22,3 +22,6 @@ spec:
     kind: GitRepository
     name: gobg-uat
   targetNamespace: gobg-uat
+  wait: true
+  dependsOn:
+  - name: gobg-test
