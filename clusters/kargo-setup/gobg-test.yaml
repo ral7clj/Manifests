@@ -29,3 +29,47 @@ spec:
     kind: Canary
     name: gobg
     namespace: gobg-test
+---
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: gobg
+  namespace: gobg-test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gobg
+  service:
+    port: 80
+    targetPort: 8080
+    gateways:
+      - mesh 
+    hosts:
+      - gobg 
+  analysis:
+    interval: 15s
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+      - name: request-success-rate
+        thresholdRange:
+          min: 99
+        interval: 1m
+    webhooks:
+      - name: "kargo-promote-to-uat"
+        type: post-rollout
+        url: "http://kargo-api.kargo.svc.cluster.local:8080/api/v1/projects/kargo/stages/uat/promotions"
+        timeout: 10s
+        headers:
+          Content-Type: "application/json"
+        authorization:
+          valueFrom:
+            secretKeyRef:
+              name: flagger-promoter-token
+              key: token
+        template: |
+          {
+            "freight": "{{- .Object.ObjectMeta.Annotations['kargo.akuity.io/freight'] | default "unknown" -}}"
+          }
