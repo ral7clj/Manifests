@@ -83,7 +83,7 @@ spec:
                     args:
                     - |
                       set -e
-                      FREIGHT_ID=$(kubectl get deployment/gobg -n gobg-test -o jsonpath='{.spec.template.metadata.annotations.kargo\.akuity\.io/freight}')
+                      FREIGHT_ID=$(kubectl get deployment/gob -n gobg-test -o jsonpath='{.spec.template.metadata.annotations.kargo\.akuity\.io/freight}')
                       if [ -z "$FREIGHT_ID" ]; then
                         exit 1
                       fi
@@ -96,4 +96,40 @@ spec:
                       spec:
                         stage: uat
                         freight: ${FREIGHT_ID}
+                      EOF
+      - name: "kargo-rollback-job"
+        type: rollback
+        url: "kubernetes-job://dummy"
+        timeout: 5m
+        metadata:
+          type: "job"
+          jobSpec: |
+            apiVersion: batch/v1
+            kind: Job
+            spec:
+              backoffLimit: 2
+              template:
+                spec:
+                  serviceAccountName: flagger-promoter-sa
+                  restartPolicy: Never
+                  containers:
+                  - name: kargo-rollback
+                    image: bitnami/kubectl:latest
+                    command: ["/bin/sh", "-c"]
+                    args:
+                    - |
+                      set -e
+                      LAST_SUCCESSFUL_FREIGHT=$(kubectl get stage test -n kargo -o jsonpath='{.status.lastPromotion.freight}')
+                      if [ -z "$LAST_SUCCESSFUL_FREIGHT" ]; then
+                        exit 0
+                      fi
+                      cat <<EOF | kubectl apply -f -
+                      apiVersion: kargo.akuity.io/v1alpha1
+                      kind: Promotion
+                      metadata:
+                        name: rollback-test-${LAST_SUCCESSFUL_FREIGHT}
+                        namespace: kargo
+                      spec:
+                        stage: test
+                        freight: ${LAST_SUCCESSFUL_FREIGHT}
                       EOF

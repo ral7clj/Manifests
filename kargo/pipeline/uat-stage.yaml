@@ -11,8 +11,7 @@ spec:
       kind: Warehouse
       name: kargo-demo
     sources:
-      stages:
-      - test
+      direct: true
   promotionTemplate:
     spec:
       vars:

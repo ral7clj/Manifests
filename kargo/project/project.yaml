@@ -7,8 +7,9 @@ spec:
   promotionPolicies:
     - stageSelector:
         name: test
+      autoPromotionEnabled: true
       autoRollback: {}
     - stageSelector:
         name: uat
-      autoPromotionEnabled: true
+      autoPromotionEnabled: false
       autoRollback: {}
