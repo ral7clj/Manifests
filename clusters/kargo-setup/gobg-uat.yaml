@@ -23,4 +23,3 @@ spec:
     name: gobg-uat
   targetNamespace: gobg-uat
   wait: true
- 
