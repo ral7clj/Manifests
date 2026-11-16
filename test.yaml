@@ -31,7 +31,7 @@ spec:
         app: gobg
     spec:
       containers:
-      - image: ral7clj/gobg:blue
+      - image: ral7clj/gobg:green
         name: gobg
         resources: {}
 ---
