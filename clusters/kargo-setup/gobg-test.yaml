@@ -63,5 +63,5 @@ spec:
     webhooks:
       - name: "kargo-promote"
         type: post-rollout
-        url: "http://kargo-promoter.gobg-test/hooks/kargo-promote"
+        url: "http://kargo-promoter.gobg-test.svc.cluster.local/hooks/kargo-promote"
         timeout: 30s
