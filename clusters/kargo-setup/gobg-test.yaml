@@ -61,7 +61,8 @@ spec:
           min: 99
         interval: 1m
     webhooks:
+      
       - name: "kargo-promote"
-        type: post-rollout
+        type: confirm-promotion
         url: "http://kargo-promoter.gobg-test.svc.cluster.local/hooks/kargo-promote"
         timeout: 30s

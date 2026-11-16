@@ -42,11 +42,17 @@ data:
   kargo-promote: |
     #!/bin/sh
     set -e
+    
+    # Retrieve the Freight ID
     FREIGHT_ID=$(kubectl get deployment/gobg -n gobg-test -o jsonpath='{.spec.template.metadata.annotations.kargo\.akuity\.io/freight}')
+    
     if [ -z "$FREIGHT_ID" ]; then
+      echo "{\"error\": \"Freight ID not found\"}"
       exit 1
     fi
-    cat <<EOF | kubectl apply -f -
+    
+    
+    cat <<EOF | kubectl apply -f - > /dev/null
     apiVersion: kargo.akuity.io/v1alpha1
     kind: Promotion
     metadata:
@@ -56,6 +62,10 @@ data:
       stage: uat
       freight: ${FREIGHT_ID}
     EOF
+    
+    # Return a clean, valid JSON to Flagger
+    echo "{}"
+
 ---
 apiVersion: apps/v1
 kind: Deployment
