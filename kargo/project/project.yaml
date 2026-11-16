@@ -10,5 +10,5 @@ spec:
       autoRollback: {}
     - stageSelector:
         name: uat
-      autoPromotionEnabled: true
+      autoPromotionEnabled: false
       autoRollback: {}

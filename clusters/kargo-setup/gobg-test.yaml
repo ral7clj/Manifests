@@ -29,3 +29,39 @@ spec:
     kind: Canary
     name: gobg
     namespace: gobg-test
+---
+apiVersion: flagger.app/v1beta1
+kind: Canary
+metadata:
+  name: gobg
+  namespace: gobg-test
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: gobg
+  service:
+    port: 80
+    targetPort: 8080
+    gateways:
+      - gobg-gateway
+      - mesh
+    hosts:
+      - gobg
+      - gobg.gobg-test
+      - gobg.gobg-test.svc.cluster.local
+  analysis:
+    interval: 15s
+    threshold: 5
+    maxWeight: 50
+    stepWeight: 10
+    metrics:
+      - name: request-success-rate
+        thresholdRange:
+          min: 99
+        interval: 1m
+    webhooks:
+      - name: "kargo-promote"
+        type: post-rollout
+        url: "http://kargo-promoter.gobg-test/hooks/kargo-promote"
+        timeout: 30s

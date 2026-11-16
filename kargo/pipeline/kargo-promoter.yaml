@@ -1,0 +1,105 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: kargo-promoter-sa
+  namespace: gobg-test
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kargo-promoter-role
+rules:
+  - apiGroups: ["kargo.akuity.io"]
+    resources: ["promotions"]
+    verbs: ["create"]
+  - apiGroups: ["kargo.akuity.io"]
+    resources: ["stages"]
+    resourceNames: ["uat"]
+    verbs: ["promote"]
+  - apiGroups: ["apps"]
+    resources: ["deployments"]
+    verbs: ["get"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: kargo-promoter-binding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: kargo-promoter-role
+subjects:
+  - kind: ServiceAccount
+    name: kargo-promoter-sa
+    namespace: gobg-test
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: kargo-promoter-script
+  namespace: gobg-test
+data:
+  promote.sh: |
+    #!/bin/sh
+    set -e
+    FREIGHT_ID=$(kubectl get deployment/gobg -n gobg-test -o jsonpath='{.spec.template.metadata.annotations.kargo\.akuity\.io/freight}')
+    if [ -z "$FREIGHT_ID" ]; then
+      exit 1
+    fi
+    cat <<EOF | kubectl apply -f -
+    apiVersion: kargo.akuity.io/v1alpha1
+    kind: Promotion
+    metadata:
+      name: promote-uat-${FREIGHT_ID}
+      namespace: kargo
+    spec:
+      stage: uat
+      freight: ${FREIGHT_ID}
+    EOF
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kargo-promoter
+  namespace: gobg-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kargo-promoter
+  template:
+    metadata:
+      labels:
+        app: kargo-promoter
+    spec:
+      serviceAccountName: kargo-promoter-sa
+      containers:
+        - name: loadtester
+          image: ghcr.io/fluxcd/flagger-loadtester:1.34.0
+          ports:
+            - name: http
+              containerPort: 8080
+          command:
+            - ./loadtester
+            - -webhook-url=/hooks/kargo-promote
+            - -webhook-script=/scripts/promote.sh
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+      volumes:
+        - name: scripts
+          configMap:
+            name: kargo-promoter-script
+            defaultMode: 0755
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: kargo-promoter
+  namespace: gobg-test
+spec:
+  ports:
+    - port: 80
+      targetPort: 8080
+  selector:
+    app: kargo-promoter
