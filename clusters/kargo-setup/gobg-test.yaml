@@ -1,68 +1,51 @@
-apiVersion: source.toolkit.fluxcd.io/v1
-kind: GitRepository
+apiVersion: kargo.akuity.io/v1alpha1
+kind: PromotionTask
 metadata:
-  name: gobg-test
-  namespace: flux-system
+  name: gobg-promote
+  namespace: kargo
 spec:
-  interval: 10s
-  url: https://github.com/ral7clj/Manifests.git
-  ref:
-    branch: stage/test
----
-apiVersion: kustomize.toolkit.fluxcd.io/v1
-kind: Kustomization
-metadata:
-  name: gobg-test
-  namespace: flux-system
-spec:
-  interval: 10s
-  path: ./
-  prune: true
-  sourceRef:
-    kind: GitRepository
-    name: gobg-test
-  targetNamespace: gobg-test
-  wait: true
-  timeout: 10m
-  healthChecks:
-  - apiVersion: flagger.app/v1beta1
-    kind: Canary
-    name: gobg
-    namespace: gobg-test
----
-apiVersion: flagger.app/v1beta1
-kind: Canary
-metadata:
-  name: gobg
-  namespace: gobg-test
-spec:
-  targetRef:
-    apiVersion: apps/v1
-    kind: Deployment
-    name: gobg
-  service:
-    port: 80
-    targetPort: 8080
-    gateways:
-      - gobg-gateway
-      - mesh
-    hosts:
-      - gobg
-      - gobg.gobg-test
-      - gobg.gobg-test.svc.cluster.local
-  analysis:
-    interval: 15s
-    threshold: 5
-    maxWeight: 50
-    stepWeight: 10
-    metrics:
-      - name: request-success-rate
-        thresholdRange:
-          min: 99
-        interval: 1m
-    webhooks:
-      
-      - name: "kargo-promote"
-        type: confirm-promotion
-        url: "http://kargo-promoter.gobg-test.svc.cluster.local/hooks/kargo-promote"
-        timeout: 30s
+  vars:
+    - name: sourceRepo
+      value: https://github.com/ral7clj/Services.git
+    - name: targetRepo
+      value: https://github.com/ral7clj/Manifests.git
+    - name: sourceBranch
+      value: main
+    - name: targetBranch
+  steps:
+    - uses: git-clone
+      as: clone-sources
+      config:
+        repoURL: ${{ vars.sourceRepo }}
+        checkout:
+          - branch: ${{ vars.sourceBranch }}
+            path: ./src
+
+    - uses: git-clone
+      as: clone-targets
+      config:
+        repoURL: ${{ vars.targetRepo }}
+        checkout:
+          - branch: stage/${{ vars.targetBranch }}
+            create: true
+            path: ./dst
+
+    
+
+    - uses: kustomize-build
+      as: build-manifests
+      config:
+        path: ./src/stages/${{ vars.targetBranch }}
+        outPath: ./dst/${{ vars.targetBranch }}.yaml
+
+    - uses: git-commit
+      as: commit
+      config:
+        path: ./dst
+        message: "kargo: upgrade manifests for stage ${{ vars.targetBranch }}"
+
+    - uses: git-push
+      as: push
+      config:
+        path: ./dst
+        targetBranch: stage/${{ vars.targetBranch }}
