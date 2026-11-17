@@ -5,45 +5,47 @@ metadata:
   namespace: kargo
   annotations:
     kargo.akuity.io/color: red
-promotionTemplate:
-  spec:
-    vars:
-      - name: targetBranch
-        value: test
-    steps:
-      # 1. remember the canary's current revision hash
-      - uses: http
-        as: baseline
-        config:
-          url: https://10.96.0.1/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
-          insecureSkipTLSVerify: true
-          headers:
-            - name: Authorization
-              value: Bearer ${{ secret('flagger-reader').token }}
-          outputs:
-            - name: lastApplied
-              fromExpression: response.body.status.lastAppliedSpec
-
-      # 2. your existing task (clone, build, commit, push)
-      - task:
-          name: gobg-promote
-        as: promote-to-test
-
-      # 3. block until Flagger finishes THIS revision
-      - uses: http
-        as: wait-canary
-        retry:
-          timeout: 15m
-        config:
-          url: https://10.96.0.1/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
-          insecureSkipTLSVerify: true
-          pollInterval: 10s
-          headers:
-            - name: Authorization
-              value: Bearer ${{ secret('flagger-reader').token }}
-          successExpression: >-
-            response.body.status.lastAppliedSpec != '${{ outputs.baseline.lastApplied }}'
-            && response.body.status.phase == 'Succeeded'
-          failureExpression: >-
-            response.body.status.lastAppliedSpec != '${{ outputs.baseline.lastApplied }}'
-            && response.body.status.phase == 'Failed'
+spec:
+  requestedFreight:
+    - origin:
+        kind: Warehouse
+        name: kargo-demo
+      sources:
+        direct: true
+  promotionTemplate:
+    spec:
+      vars:
+        - name: targetBranch
+          value: test
+      steps:
+        - uses: http
+          as: baseline
+          config:
+            url: https://10.96.0.1/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
+            insecureSkipTLSVerify: true
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('flagger-reader').token }}
+            outputs:
+              - name: lastApplied
+                fromExpression: response.body.status.lastAppliedSpec
+        - task:
+            name: gobg-promote
+          as: promote-to-test
+        - uses: http
+          as: wait-canary
+          retry:
+            timeout: 15m
+          config:
+            url: https://10.96.0.1/apis/flagger.app/v1beta1/namespaces/gobg-test/canaries/gobg
+            insecureSkipTLSVerify: true
+            pollInterval: 10s
+            headers:
+              - name: Authorization
+                value: Bearer ${{ secret('flagger-reader').token }}
+            successExpression: >-
+              response.body.status.lastAppliedSpec != '${{ outputs.baseline.lastApplied }}'
+              && response.body.status.phase == 'Succeeded'
+            failureExpression: >-
+              response.body.status.lastAppliedSpec != '${{ outputs.baseline.lastApplied }}'
+              && response.body.status.phase == 'Failed'
