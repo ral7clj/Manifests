@@ -31,7 +31,7 @@ spec:
         app: gobg
     spec:
       containers:
-      - image: ral7clj/gobg:green
+      - image: ral7clj/gobg:blue
         name: gobg
         resources: {}
 ---
@@ -55,6 +55,50 @@ spec:
   selector:
     app: gobg
   type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+    kustomize.toolkit.fluxcd.io/ssa: Merge
+  name: flagger-loadtester
+  namespace: gobg-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flagger-loadtester
+  template:
+    metadata:
+      annotations:
+        kustomize.toolkit.fluxcd.io/force: enabled
+        kustomize.toolkit.fluxcd.io/ssa: Merge
+      labels:
+        app: flagger-loadtester
+    spec:
+      containers:
+      - image: ghcr.io/fluxcd/flagger-loadtester:0.36.0
+        imagePullPolicy: IfNotPresent
+        name: loadtester
+        ports:
+        - containerPort: 9090
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    kustomize.toolkit.fluxcd.io/force: enabled
+    kustomize.toolkit.fluxcd.io/ssa: Merge
+  name: flagger-loadtester
+  namespace: gobg-test
+spec:
+  ports:
+  - port: 80
+    targetPort: 9090
+  selector:
+    app: flagger-loadtester
 ---
 apiVersion: networking.istio.io/v1alpha3
 kind: Gateway
@@ -94,6 +138,14 @@ spec:
         min: 99
     stepWeight: 10
     threshold: 5
+    webhooks:
+    - metadata:
+        cmd: hey -z 1m -q 10 -c 2 http://gobg-canary.gobg-test.svc.cluster.local/
+        type: cmd
+      name: load-test
+      timeout: 5s
+      type: rollout
+      url: http://flagger-loadtester.gobg-test.svc.cluster.local/
   service:
     gateways:
     - gobg-gateway
