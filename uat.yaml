@@ -42,3 +42,38 @@ spec:
   selector:
     app: gobg
   type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flagger-loadtester
+  namespace: gobg-uat
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flagger-loadtester
+  template:
+    metadata:
+      labels:
+        app: flagger-loadtester
+    spec:
+      containers:
+      - image: ghcr.io/fluxcd/flagger-loadtester:0.36.0
+        imagePullPolicy: IfNotPresent
+        name: loadtester
+        ports:
+        - containerPort: 9090
+          name: http
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flagger-loadtester
+  namespace: gobg-uat
+spec:
+  ports:
+  - port: 80
+    targetPort: 9090
+  selector:
+    app: flagger-loadtester
