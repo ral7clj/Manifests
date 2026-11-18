@@ -19,8 +19,8 @@ spec:
     config:
       repoURL: ${{ vars.sourceRepo }}
       checkout:
-      - branch: ${{ vars.sourceBranch }}
-        path: ./src
+        - commit: ${{ commitFrom(vars.sourceRepo).ID }}
+          path: ./src
 
   - uses: git-clone
     as: clone-targets
